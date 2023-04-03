@@ -199,33 +199,40 @@ class Envirnoment:
 
 data = []
 game = 'data1.csv'
-
+size = 100
+rate = 0.01
 with open(game, 'r') as file:
     reader = csv.reader(file)
     for row in reader:
         data.append(row)
 
-game = Envirnoment(60,data, 0.01)
+game = Envirnoment(size, data, rate)
 game.test_env()
 
 # create some dummy data for three datasets
 generation = np.arange(0, game.gen_itr)
-fitness1 = np.array(game.avgFitPerGene)
-fitness2 = np.array(game.sumFitPerGen)
-fitness3 = np.array(game.avgPosFitPerGene)
+avgFit = np.array(game.avgFitPerGene)
+sumFit = np.array(game.sumFitPerGen)
 
+
+plt.subplot(2, 1, 1)
 # create a line plot with three different lines
-sns.lineplot(x=generation, y=fitness1, color='blue', label='Dataset 1')
-sns.lineplot(x=generation, y=fitness2, color='red', label='Dataset 2')
-sns.lineplot(x=generation, y=fitness3, color='green', label='Dataset 3')
+sns.lineplot(x=generation, y=sumFit, color='red', label='Dataset 2')
+
 
 # set the title and axis labels
-plt.title('Fitness vs Generation')
+plt.title('Total Fitness vs Generation')
 plt.xlabel('Generation')
 plt.ylabel('Fitness')
 
 # show the legend
 plt.legend()
+
+plt.subplot(2, 1, 2)
+sns.lineplot(x=generation, y=avgFit, color='blue', label='Dataset 1')
+plt.title('Average Fitness vs Generation')
+plt.xlabel('Generation')
+plt.ylabel('Fitness')
 
 # show the plot
 plt.show()
