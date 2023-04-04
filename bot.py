@@ -87,31 +87,37 @@ class Individual:
         mid = random.randint(27, 54)
         i = 0
         for key in baby.dna.keys():
-            if i < mid:
+            #if i < mid:
+                #baby.dna[key] = self.dna.get(key)
+            #else:
+                #baby.dna[key] = other.dna.get(key)
+            #i += 1
+            if self.dna.get(key)[1] > other.dna.get(key)[1]:
                 baby.dna[key] = self.dna.get(key)
             else:
                 baby.dna[key] = other.dna.get(key)
-            i += 1
 
         return baby
 
     def mutate(self, rate = 0.01):
         mutateRate =  math.ceil(rate * 81)
         mutateGene = ""
+        mod = False
         if mutateRate == 0:
             return 0
         
         for i in range(0, mutateRate):
             for j in range(0, 4):
                 mutateGene += random.choice(['R', 'P', 'S'])
-        
-            if self.dna.get(mutateGene) == "P":
+
+            if self.dna.get(mutateGene)[0] == "P":
                 self.dna[mutateGene] = [random.choice(['R', 'S']), 3]
-            elif self.dna.get(mutateGene) == "S":
+            elif self.dna.get(mutateGene)[0] == "S":
                 self.dna[mutateGene] = [random.choice(['R', 'P']), 3]
             else:
                 self.dna[mutateGene] = [random.choice(['P', 'S']), 3]
             mutateGene = ""
+
         return 0
     
     def __str__(self) -> str:
@@ -136,7 +142,8 @@ class Envirnoment:
         self.pop = []
         self.matingPool = []
         self.idealFitPerGene = []
-        self.sumFitPerGen = []
+        self.maxIndFitPerGen = []
+        self.avgFitPerGen = []
         self.env = envirnoment
         self.envSize = len(envirnoment)
         self.gen_itr = self.envSize//(81 * self.size)
@@ -225,11 +232,12 @@ class Envirnoment:
 
             ##################STATISTICS##################
             idealFitPer = round((total_fitness/self.ideal) * 100, 2)
+            avgFit = total_fitness//len(self.pop)
             self.idealFitPerGene.append(idealFitPer)
-            self.sumFitPerGen.append(total_fitness)    
-            print(f"Generation {i}: Total Fitness - {total_fitness}, Ideal Fitness - {self.ideal}, Ideal Precentage - {idealFitPer}%")
+            self.avgFitPerGen.append(avgFit)    
+            print(f"Generation {i}: Avg. Fitness - {avgFit}, Ideal Fitness - {self.ideal}, Ideal Precentage - {idealFitPer}%")
             max = self.get_max_individaul()
-
+            self.maxIndFitPerGen.append(max.get_fitness())
             print(f"Individaul with the highest fitness: {max.get_fitness()}, Selection Threshold: {max.get_fitness()//2}")
             print(f"Max individual Win: {max.win}, Losses: {max.lose}, Draws: {max.draw}, Untested: {max.untested}")
             ##################STATISTICS##################
@@ -265,7 +273,7 @@ class Envirnoment:
 data = []
 game = 'data2.csv'
 size = 1000
-rate = 0.15
+rate = 0.1
 elitism = True 
 eliteRate = 0.2
 with open(game, 'r') as file:
@@ -290,25 +298,16 @@ for key, value in max.dna.items():
 # create some dummy data for three datasets
 generation = np.arange(0, game.gen_itr)
 idealFit = np.array(game.idealFitPerGene)
-sumFit = np.array(game.sumFitPerGen)
+avgFit = np.array(game.avgFitPerGen)
+maxFit = np.array(game.maxIndFitPerGen)
 
-plt.subplot( 2, 1, 1)
 #create a line plot with three different lines
-sns.lineplot(x=generation, y=sumFit, color='red', label='Dataset 2', marker='x')
-
+sns.lineplot(x=generation, y=avgFit, color='blue', label='Avg. Fitness', marker='x')
+sns.lineplot(x=generation, y=maxFit, color='black', label='Most Fit Individaul', marker='o')
 # set the title and axis labels
 plt.title('Total Fitness vs Generation')
 plt.xlabel('Generation')
 plt.ylabel('Fitness')
-
-plt.subplot( 2, 1, 2)
-#create a line plot with three different lines
-sns.lineplot(x=generation, y=idealFit, color='red', label='Dataset 2', marker='o')
-
-# set the title and axis labels
-#plt.title('Total Fitness vs Generation')
-plt.xlabel('Generation%')
-plt.ylabel('Ideal%')
 
 # show the plot
 plt.show()
