@@ -54,10 +54,11 @@ class Individual:
         self.win = 0
         self.lose = 0
         self.draw = 0
-        self.untested = 0 
+        self.untested = 0
+        self.curr_gen = 0
         self.dna = {}
         for item in self.dictionary:
-            self.dna["".join(item)] = [random.choice(['R', 'P', 'S']), 3]
+            self.dna["".join(item)] = [random.choice(['R', 'P', 'S']), -10]
 
     def get_fitness(self, Ideal = False)->int:
         if Ideal:
@@ -84,14 +85,8 @@ class Individual:
 
     def crossover(self, other):
         baby = Individual()
-        mid = random.randint(27, 54)
-        i = 0
+        
         for key in baby.dna.keys():
-            #if i < mid:
-                #baby.dna[key] = self.dna.get(key)
-            #else:
-                #baby.dna[key] = other.dna.get(key)
-            #i += 1
             if self.dna.get(key)[1] > other.dna.get(key)[1]:
                 baby.dna[key] = self.dna.get(key)
             else:
@@ -102,7 +97,6 @@ class Individual:
     def mutate(self, rate = 0.01):
         mutateRate =  math.ceil(rate * 81)
         mutateGene = ""
-        mod = False
         if mutateRate == 0:
             return 0
         
@@ -111,11 +105,11 @@ class Individual:
                 mutateGene += random.choice(['R', 'P', 'S'])
 
             if self.dna.get(mutateGene)[0] == "P":
-                self.dna[mutateGene] = [random.choice(['R', 'S']), 3]
+                self.dna[mutateGene] = [random.choice(['R', 'S']), -10]
             elif self.dna.get(mutateGene)[0] == "S":
-                self.dna[mutateGene] = [random.choice(['R', 'P']), 3]
+                self.dna[mutateGene] = [random.choice(['R', 'P']), -10]
             else:
-                self.dna[mutateGene] = [random.choice(['P', 'S']), 3]
+                self.dna[mutateGene] = [random.choice(['P', 'S']), -10]
             mutateGene = ""
 
         return 0
@@ -124,20 +118,21 @@ class Individual:
         str = ""
         for key, value in self.dna.items():
             if key == 'SSSS':
-                str += value
+                str += value[0]
             else:
-                str += value + ","
+                str += value[0] + ","
 
         return str
 
 
 class Envirnoment:
-    def __init__(self, populationSize, envirnoment, mutateRate, el, el_rate) -> None:
+    def __init__(self, populationSize, envirnoment, mutateRate, el, el_rate, cul) -> None:
         self.size = populationSize
         self.rate = mutateRate
         self.elite_flag = el
         self.elite_rate = el_rate
         self.elites = []
+        self.culling = cul
         self.ideal = 0
         self.pop = []
         self.matingPool = []
@@ -186,11 +181,8 @@ class Envirnoment:
             
     def test_individaul(self, ind, test):
         for gene in test:
-            #print(f"Test Gene : {gene}. Before Ind Wins: {ind.win}, Loses : {ind.lose}, Draw : {ind.draw}")
             self.fitness_test(ind, gene)
             ind.get_fitness()
-            #print(f"Test Gene : {gene}. After Ind Wins: {ind.win}, Loses : {ind.lose}, Draw : {ind.draw}")
-            #print("")
 
     def sim_ideal(self):
         for ind in self.pop:
@@ -226,7 +218,7 @@ class Envirnoment:
                 test = []
                 for j in range(0, 81):
                     test.append(self.env.pop(0))
-
+                ind.curr_gen = i
                 self.test_individaul(ind, test)
                 total_fitness += ind.get_fitness()
 
@@ -244,14 +236,14 @@ class Envirnoment:
 
             # selection of individaul to enter mating pool
             for ind in self.pop:
-                if ind.get_fitness() > max.get_fitness()//2:
+                if ind.get_fitness() > int(max.get_fitness() * self.culling):
                     n = ind.get_fitness()
-                    for i in range(0, n):
+                    for k in range(0, n):
                         self.matingPool.append(ind)
             
             self.pop = []
             self.get_elites()
-            for i in range(0, self.size):
+            for n in range(0, self.size):
                 if self.elites and len(self.elites) != 0:
                     baby = self.elites.pop(0)
                     baby.win = 0
@@ -271,20 +263,30 @@ class Envirnoment:
                     self.pop.append(baby)
 
 data = []
-game = 'data2.csv'
-size = 1000
-rate = 0.1
+game_file = 'data2'
+size = 100
+rate = 0.05
 elitism = True 
 eliteRate = 0.2
-with open(game, 'r') as file:
+cullingRate = 0.5
+with open(game_file + '.csv', 'r') as file:
     reader = csv.reader(file)
     for row in reader:
         data.append(row)
 
-game = Envirnoment(size, data, rate, elitism, eliteRate)
+game = Envirnoment(size, data, rate, elitism, eliteRate, cullingRate)
 game.test_env()
 max = game.max_individaul
 
+with open(game_file +'.txt', "w") as f:
+    # write the string to the file
+    f.write(str(max))
+
+# close the file
+f.close()
+print("")
+print(f"Individaul with the highest fitness: {max.get_fitness()}")
+print(f"Max individual Win: {max.win}, Losses: {max.lose}, Draws: {max.draw}, Untested: {max.untested}")
 for key, value in max.dna.items():
     if value[1] == 1:
         print(f"Max individual DNA: History Gene {key}, Move {value[0]} -- WIN!! ")
